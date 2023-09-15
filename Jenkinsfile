@@ -1,13 +1,12 @@
 def functionName = 'MoviesParser'
-def imageName = 'mlabouardy/movies-parser'
-def bucket = 'deployment-packages-watchlist'
-def region = 'eu-west-3'
+def imageName = 'adriannavarro/parser'
+def bucket = 'deployment-packages-watchlist.test123456'
+def region = 'eu-west-1'
 
-node('workers'){
+node('jenkins_agent'){
     try{
         stage('Checkout'){
             checkout scm
-            notifySlack('STARTED')
         }
 
         def imageTest= docker.build("${imageName}-test", "-f Dockerfile.test .")
@@ -26,7 +25,7 @@ node('workers'){
                 },
                 'Security Tests': {
                     imageTest.inside('-u root:root'){
-                        sh 'nancy /go/src/github/mlabouardy/movies-parser/Gopkg.lock'
+                        sh 'nancy /go/src/github/adriannavarro/parser/Gopkg.lock'
                     }
                 }
             )
@@ -36,7 +35,7 @@ node('workers'){
             sh """
                 docker build -t ${imageName} .
                 containerName=\$(docker run -d ${imageName})
-                docker cp \$containerName:/go/src/github.com/mlabouardy/movies-parser/main main
+                docker cp \$containerName:/go/src/github.com/adriannavarro/parser/main main
                 docker rm -f \$containerName
                 zip -r ${commitID()}.zip main
             """
@@ -62,24 +61,6 @@ node('workers'){
         sh "rm -rf ${commitID()}.zip"
     }
 }
-
-def notifySlack(String buildStatus){
-    buildStatus =  buildStatus ?: 'SUCCESSFUL'
-    def colorCode = '#FF0000'
-    def subject = "Name: '${env.JOB_NAME}'\nStatus: ${buildStatus}\nBuild ID: ${env.BUILD_NUMBER}"
-    def summary = "${subject}\nMessage: ${commitMessage()}\nAuthor: ${commitAuthor()}\nURL: ${env.BUILD_URL}"
-
-    if (buildStatus == 'STARTED') {
-        colorCode = '#546e7a'
-    } else if (buildStatus == 'SUCCESSFUL') {
-        colorCode = '#2e7d32'
-    } else {
-        colorCode = '#c62828c'
-    }
-
-    slackSend (color: colorCode, message: summary)
-}
-
 
 def commitAuthor(){
     sh 'git show -s --pretty=%an > .git/commitAuthor'
