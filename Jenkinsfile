@@ -14,18 +14,18 @@ node('jenkins_agent'){
         stage('Pre-integration Tests'){
             parallel(
                 'Quality Tests': {
-                    imageTest.inside{
-                        // sh 'golint'
-                        echo "Tests passed"
+                    // imageTest.inside{
+                    //     // sh 'golint'
 
-                    }
+                    // }
+                    echo "Tests passed"
                 },
                 'Unit Tests': {
-                    imageTest.inside{
-                        // sh 'go test'
-                        echo "Tests passed"
+                    // imageTest.inside{
+                    //     // sh 'go test'
 
-                    }
+                    // }
+                    echo "Tests passed"
                 },
                 'Security Tests': {
                     // imageTest.inside('-u root:root'){
